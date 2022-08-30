@@ -33,14 +33,21 @@ from itertools import chain
 class WildfireFunctions:
     def __init__(self, location):
         self.location = location
+        wildfire = pd.read_csv(self.location)
+        wildfire.reset_index(drop=True, inplace=True)
+        wildfire=wildfire.dropna() 
+        self.tweet= wildfire["tweets"]
+        self.date= wildfire["date"]
+        self.rt= wildfire["rt"]
+        self.fav= wildfire["fav"]
 
     def load_file(self):
         wildfire = pd.read_csv(self.location)
         wildfire.reset_index(drop=True, inplace=True)
-        wildfire=wildfire.dropna()    
-        return wildfire
+        self.wildfire=wildfire.dropna()    
+        return self.wildfire
     
-    def remove_links(self,tweet):
+    def remove_links(self, tweet):
         tweet = re.sub(r'https?:\/\/\S+', '', tweet)# remove hyper links
         tweet = re.sub(r'bit.ly/\S+', '', tweet) # remove bitly links
         tweet = tweet.strip('[links]') # remove links
@@ -58,8 +65,8 @@ class WildfireFunctions:
         tweet = re.sub('\s+', ' ', tweet)   #remove double spacing
         tweet = re.sub('([0-9]+)', '', tweet) # remove numbers
         return tweet
-
-    def clean_tweets(self, tweet, bigrams=False):
+    
+    def cleaning_tweet(self, tweet, bigrams=False):
         mywords = nltk.stem.snowball.PorterStemmer(ignore_stopwords=False).stem
         mystopwords = set(stopwords.words('english'))
         tweet = tweet.lower() # to make lower case
@@ -76,8 +83,12 @@ class WildfireFunctions:
             tweet_token = tweet_token+[tweet_token[i]+'_'+tweet_token[i+1]
                                         for i in range(len(tweet_token)-1)]
         tweet = ' '.join(tweet_token)
-        tweet = re.sub('wildfir', 'wildfire', tweet) #to correct wildfire because of data cleaning
         return tweet
+
+    def cleaning_tweets(self):
+        self.clean_tweets = self.tweet.apply(self.cleaning_tweet)
+        return self.clean_tweets
+
 
     def get_top_n_gram(self, corpus,ngram_range,n=None):
         vec = CountVectorizer(ngram_range=ngram_range,stop_words = 'english').fit(corpus)
@@ -142,7 +153,6 @@ class WildfireFunctions:
             return 'Neutral'
         else:
             return 'Positive'
-
 
 
                 
